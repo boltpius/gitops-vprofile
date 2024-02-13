@@ -1,0 +1,58 @@
+name: "gitops-IAC"
+on:
+  push: # when ever there are changes in any of these branches, it triggers the workflow.
+    branches:
+      - main
+      - stage
+    paths:
+      - terraform/**
+  pull_request: # when ever there is a pull request to the main branch or when a merge it done to the main branch, it triggers the workflow.
+    branches:
+      - main
+    paths:
+      - terraform/**
+
+env:
+  AWS_ACCESS_KEY_ID: ${ secrets.AWS_ACCESS_KEY_ID }
+  AWS_SECRET_ACCESS_KEY: ${ secrets.AWS_SECRET_ACCESS_KEY }
+  BUCKET_TF_STATE: ${ secrets.BUCKET_TF_STATE } # s3 bucket for terrafoprm state
+  AWS_REGION: eu-west-1
+  EKS_CLUSTER: gitops-eks
+
+jobs:
+  Terraform:
+    name: "Apply terraform code changes"
+    runs-on: ubuntu-latest #it creates a container to run the operation or the job in this context.
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup terraform with specified version on the runner
+        uses: hashicorp/setup-terraform@v3
+        #with:
+        #   terraform_version: "1.1.7"
+
+      - name: Terraform init
+        id: init
+        run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false -out planfile # The ⁠ -out ⁠ flag is used to specify a file name for saving the execution plan. In this case, ⁠ planfile ⁠ is the name of the file where the plan will be saved. This file can be used later with the ⁠ terraform apply ⁠ command to apply the planned changes to your infrastructure.
+        continue-on-error: true
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure' # this checks if the plan steps fails or throws errors then it should kill the container.
+        run: exit 1
