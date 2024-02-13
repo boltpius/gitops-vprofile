@@ -13,9 +13,9 @@ on:
       - terraform/**
 
 env:
-  AWS_ACCESS_KEY_ID: ${ secrets.AWS_ACCESS_KEY_ID }
-  AWS_SECRET_ACCESS_KEY: ${ secrets.AWS_SECRET_ACCESS_KEY }
-  BUCKET_TF_STATE: ${ secrets.BUCKET_TF_STATE } # s3 bucket for terrafoprm state
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }} # s3 bucket for terrafoprm state
   AWS_REGION: eu-west-1
   EKS_CLUSTER: gitops-eks
 
